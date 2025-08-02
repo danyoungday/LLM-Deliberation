@@ -34,9 +34,21 @@ def test():
     print(initial_deal)
     print(role_to_agent_names)
 
-    from mystuff.coordinator_initial_prompt import CoordinatorInitialPrompt
-    initial_prompt_agent = CoordinatorInitialPrompt('./games_descriptions/base', "Moderator", None, role_to_agent_names['p1'], role_to_agent_names['p2'])
-    print(initial_prompt_agent.return_initial_prompt())
+    from save_utils import create_outfiles
+
+    class FakeArgs:
+        def __init__(self):
+            self.restart = False
+            self.output_file = "temp_history.json"
+    args = FakeArgs()
+    OUTPUT_DIR = "./temp"
+    agent_round_assignment, start_round_idx, history  = create_outfiles(args, OUTPUT_DIR)
+
+    from mystuff.coordinator_round_prompts import CoordinatorRoundPrompts
+    round_prompt_agent = CoordinatorRoundPrompts("Moderator", role_to_agent_names['p1'],initial_deal,\
+                                    incentive="collaborative",
+                                    rounds_num=24, agents_num=6) 
+    print(round_prompt_agent.build_slot_prompt(history["content"], start_round_idx))
 
 if __name__ == "__main__":
     test()

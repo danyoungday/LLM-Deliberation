@@ -56,7 +56,7 @@ def write_file(log_dict,output_file):
         json.dump(log_dict, outfile)
     return 
 
-def create_outfiles(args,OUTPUT_DIR):
+def create_outfiles(args, OUTPUT_DIR):
     '''
     create output dirs of experiment if it does not exit 
     if restart:

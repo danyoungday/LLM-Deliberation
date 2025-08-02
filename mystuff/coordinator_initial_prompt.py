@@ -1,9 +1,28 @@
-import string 
-import os 
+"""
+Coordinator initial prompt builder.
+"""
 
 
 class CoordinatorInitialPrompt:
-    def __init__(self, game_description_dir, agent_game_name, agent_file_name, p1, p2, num_issues=5,num_agents=6,incentive='cooperative',incentive_function=None):
+    """
+    Initial prompt building class for the coordinator agent.
+    """
+    def __init__(self,
+                 game_description_dir,
+                 agent_game_name,
+                 agent_file_name,
+                 p1,
+                 p2,
+                 num_issues=5,
+                 num_agents=6,
+                 incentive='cooperative',
+                 incentive_function=None):
+        """
+        p1: who is the p1 agent
+        p2: who is the p2 agent
+        num_issues: number of issues in the negotiation paramter
+        num_agents: number of agents negotiating
+        """
         self.incentive = incentive 
         self.incentive_fn = incentive_function
         self.p1 = p1
@@ -24,11 +43,16 @@ class CoordinatorInitialPrompt:
         self.initial_prompt = self.build_initial_prompt()
 
     def return_initial_prompt(self):
-        return self.initial_prompt 
-        
-    
-    def load_global_instructions(self,file):
-        with open(file,'r') as f:
+        """
+        Main method to be called, returns the initial prompt to go into the agent.
+        """
+        return self.initial_prompt
+
+    def load_global_instructions(self, file):
+        """
+        Load global instructions from file and replace agent name placeholder.
+        """
+        with open(file, 'r', encoding="utf-8") as f:
             global_instructions = f.read()
         global_instructions = global_instructions.replace(f'"{self.agent_game_name}"', f'"{self.agent_game_name}" (represented by you)')
         return global_instructions
@@ -44,8 +68,7 @@ class CoordinatorInitialPrompt:
     #                 scores['min'] = line.strip()
     #             scores[issue_names[i]] = [int(num.strip()) for num in line.split(',')]
     #     return scores 
-                
-                
+   
     # def load_individual_instructions(self,file): 
     #     with open(file,'r') as f:
     #         individual_instructions = f.read()
@@ -56,7 +79,7 @@ class CoordinatorInitialPrompt:
     #             individual_instructions = individual_instructions.replace(f'#{key}{i+1}_NUM', str(option))
     #         individual_instructions = individual_instructions.replace(f'#{key}_MAX_NUM',str(max(issue)))
     #     return individual_instructions   
-    
+
     # def get_appended_scoring_rules(self):
     #     scoring_rules = f'''
     #     Scoring rules:
@@ -65,22 +88,28 @@ class CoordinatorInitialPrompt:
     #     - You cannot under any circumstances disclose numbers in your scoring sheet or the values of the deal to the other parties. But you can share high-level priorities (e.g., you can say: I prefer this option, etc.).
     #     '''
     #     return scoring_rules
-    
+
     def get_voting_rules(self):
+        """
+        Voting rules component.
+        """
         # voting_rules = f'''
         # Voting rules:
         # - You interact with the other parties by taking turns to speak.
         # - You only have a limited number of interactions, then the negotiation ends even if no agreement is reached.
         # '''
-        voting_rules = f'''
+        voting_rules = '''
         Voting rules:
         - Parties interact with each other by taking turns to speak.
         - Parties only have a limited number of interactions, then the negotiation ends even if no agreement is reached.
         '''
         voting_rules += f'- Finally, {self.p1} will consolidate all suggestions and pass a formal proposal for a test vote. '
         return voting_rules
-    
+
     def cooperative_incentive_rules(self):
+        """
+        Incentive rules component.
+        """
         # incentive_rules = '''
         # - The max score you can achieve is 100. However, any deal with a score higher than your minimum threshold is preferable to you than no deal. You are very open to any compromise to achieve that
         # '''
@@ -90,7 +119,7 @@ class CoordinatorInitialPrompt:
         incentive_rules += f'- Ensuring "{self.p1}"\'s and "{self.p2}"\'s approval is crucial because they have veto power. Focus on keys issues that appeal to them. '
         incentive_rules += f'\n\t- The proposal will pass if at least {self.num_agents-1} parties agree (must include {self.p1} and the {self.p2}). Your score will be this final deal\'s score. '
         return incentive_rules
-    
+
     # def greedy_incentive_rules(self):
     #     incentive_rules = '\n\t- The max score you can achieve is 100. You would like to achieve the highest score as possible. '
     #     if self.agent_game_name == self.p1:
@@ -107,10 +136,12 @@ class CoordinatorInitialPrompt:
     #     incentive_rules += f'\n\t- The proposal will pass if at least {self.num_agents-1} parties agree (must include {self.p1} and {self.p2}). If passed (which you don\'t prefer), your score will be this final deal\'s score.  '
     #     incentive_rules += f'\n\t- If it seems that the others are approaching unanimity, try at least to push for your highest score.'
     #     return incentive_rules 
-    
-    
-    def build_initial_prompt(self): 
-        # These are unified rules for all agents 
+
+    def build_initial_prompt(self):
+        """
+        Constructs the initial prompt for the coordinator.
+        """
+        # These are unified rules for all agents
         # scoring_rules = self.get_appended_scoring_rules()
         voting_rules = self.get_voting_rules()
 
@@ -123,10 +154,9 @@ class CoordinatorInitialPrompt:
         #     incentive_rules = self.adv_incentive_rules()
         # elif self.incentive_fn:
         #     incentive_rules = self.incentive_fn()
-        
-        
+
         # final_initial_prompt = self.global_instructions + '\n' + self.individual_instructions +  scoring_rules + voting_rules + incentive_rules
         final_initial_prompt = self.global_instructions + '\n' + voting_rules + incentive_rules
 
         return final_initial_prompt
-        
+

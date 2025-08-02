@@ -78,22 +78,22 @@ hf_models = {}
 
 
 # Instaniate agents (initial prompt, round prompt, agent class)
-for name in agents.keys(): 
-    if 'hf' in agents[name]['model'] and not agents[name]['model'] in hf_models:
-        hf_models[agents[name]['model']] = setup_hf_model(agents[name]['model'].split('hf_')[-1], cache_dir=args.hf_home)
+for name, agent in agents.items(): 
+    if 'hf' in agent['model'] and not agent['model'] in hf_models:
+        hf_models[agent['model']] = setup_hf_model(agent['model'].split('hf_')[-1], cache_dir=args.hf_home)
         
-    inital_prompt_agent = InitialPrompt(args.game_dir, name, agents[name]['file_name'],\
+    inital_prompt_agent = InitialPrompt(args.game_dir, name, agent['file_name'],\
                                         role_to_agent_names['p1'], role_to_agent_names['p2'], \
-                                        num_issues=args.issues_num, num_agents= args.agents_num, incentive=agents[name]['incentive'])
+                                        num_issues=args.issues_num, num_agents= args.agents_num, incentive=agent['incentive'])
     
     round_prompt_agent = RoundPrompts(name, role_to_agent_names['p1'],initial_deal,\
-                                    incentive=agents[name]['incentive'], window_size=args.window_size,
+                                    incentive=agent['incentive'], window_size=args.window_size,
                                     target_agent=role_to_agent_names.get('target',''),\
                                     rounds_num=args.rounds_num, agents_num=args.agents_num)      
 
         
-    agent_instance = Agent(inital_prompt_agent,round_prompt_agent,name,args.temp,model=agents[name]['model'],azure=args.azure,hf_models=hf_models)
-    agents[name]['instance'] = agent_instance
+    agent_instance = Agent(inital_prompt_agent,round_prompt_agent,name,args.temp,model=agent['model'],azure=args.azure,hf_models=hf_models)
+    agent['instance'] = agent_instance
 
 
 
@@ -105,6 +105,8 @@ for round_idx in range(start_round_idx,args.rounds_num):
     if round_idx == 0:
         #For first round, initialize with p1 suggesting the first deal from 'initial_deal.txt' file 
         current_agent = role_to_agent_names['p1']
+        print(history)
+        assert False
         slot_prompt, agent_response = agents[current_agent]['instance'].execute_round(history['content'], round_idx)
         history = save_conversation(history, current_agent,agent_response, slot_prompt,round_assign=agent_round_assignment,initial=True)
         print('=====')
