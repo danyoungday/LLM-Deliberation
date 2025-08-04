@@ -15,7 +15,7 @@ class RoundPrompts:
 
     def build_slot_prompt(self,history,round_idx, other_args={}):
         first = (round_idx == 0) #first round 
-        final_round = ( (self.rounds_num-round_idx) <= self.agents_num ) #final time the agent would speak 
+        final_round = ( (self.rounds_num-round_idx) <= self.agents_num) #final time the agent would speak 
         final_vote = (round_idx == self.rounds_num) #final voting session 
         
         

@@ -56,7 +56,7 @@ class Agent():
         if 'gpt' in self.model and not self.azure:        
             messages = self.messages + [ {"role": role, "content": msg} ]
             response = self.client.chat.completions.create(model=self.model, messages=messages,temperature=self.temperature)
-            content = response.choices[0].message
+            content = response.choices[0].message.content
             return content 
         
         elif 'gpt' in self.model and self.azure:

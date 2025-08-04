@@ -12,7 +12,9 @@ from agent import Agent
 from initial_prompts import InitialPrompt
 from rounds import RoundPrompts 
 
-
+from mystuff.coordinator_agent import Coordinator
+from mystuff.coordinator_initial_prompt import CoordinatorInitialPrompt
+from mystuff.coordinator_round_prompts import CoordinatorRoundPrompts
 from utils import load_setup, set_constants, randomize_agents_order, setup_hf_model
 from save_utils import create_outfiles,save_conversation 
 
@@ -95,7 +97,25 @@ for name, agent in agents.items():
     agent_instance = Agent(inital_prompt_agent,round_prompt_agent,name,args.temp,model=agent['model'],azure=args.azure,hf_models=hf_models)
     agent['instance'] = agent_instance
 
-
+# Initialize coordinator agent
+initial_prompt_coordinator = CoordinatorInitialPrompt(None, None, None,
+                                                      role_to_agent_names['p1'],
+                                                      role_to_agent_names['p2'],
+                                                      args.issues_num,
+                                                      args.agents_num,
+                                                      incentive="cooperative")
+round_prompt_coordinator = CoordinatorRoundPrompts(None,
+                                                   role_to_agent_names['p1'],
+                                                   initial_deal,
+                                                   "cooperative",
+                                                   window_size=args.window_size,
+                                                   rounds_num=args.rounds_num,
+                                                   agents_num=args.agents_num)
+coordinator_agent = Coordinator(initial_prompt_coordinator,
+                                round_prompt_coordinator,
+                                "Moderator",
+                                args.temp,
+                                "gpt-4o-mini")
 
 # If not restart, agent_round_assignment is empty, then randomize order 
 if not args.restart: 
@@ -105,15 +125,21 @@ for round_idx in range(start_round_idx,args.rounds_num):
     if round_idx == 0:
         #For first round, initialize with p1 suggesting the first deal from 'initial_deal.txt' file 
         current_agent = role_to_agent_names['p1']
-        print(history)
-        assert False
         slot_prompt, agent_response = agents[current_agent]['instance'].execute_round(history['content'], round_idx)
         history = save_conversation(history, current_agent,agent_response, slot_prompt,round_assign=agent_round_assignment,initial=True)
         print('=====')
         print(f'{current_agent} response: {agent_response}')
     
-    #Continue with rounds 
-    current_agent = agent_round_assignment[round_idx]
+    #Continue with rounds
+    # Get next agent
+    slot_prompt, agent_response = coordinator_agent.execute_round(history['content'], round_idx)
+    history = save_conversation(history, "Moderator", agent_response, slot_prompt, agent_round_assignment)
+    current_agent = coordinator_agent.get_next_speaker(agent_response)
+    print("*****")
+    print(f'Moderator: {agent_response}')
+
+    # current_agent = agent_round_assignment[round_idx]
+    # Query next agent
     slot_prompt, agent_response = agents[current_agent]['instance'].execute_round(history['content'], round_idx)
     history = save_conversation(history, current_agent,agent_response, slot_prompt)
     print('=====')
