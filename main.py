@@ -12,12 +12,15 @@ from agent import Agent
 from initial_prompts import InitialPrompt
 from rounds import RoundPrompts 
 
-
+from mystuff.coordinator_agent import Coordinator
+from mystuff.coordinator_initial_prompt import CoordinatorInitialPrompt
+from mystuff.coordinator_round_prompts import CoordinatorRoundPrompts
 from utils import load_setup, set_constants, randomize_agents_order, setup_hf_model
 from save_utils import create_outfiles,save_conversation 
 
 parser = argparse.ArgumentParser(description='big negotiation!!')
 
+parser.add_argument("--moderator", action="store_true", help="Use the moderator to select the next speaker.")
 
 parser.add_argument('--temp',type=float, default='0')
 
@@ -78,24 +81,43 @@ hf_models = {}
 
 
 # Instaniate agents (initial prompt, round prompt, agent class)
-for name in agents.keys(): 
-    if 'hf' in agents[name]['model'] and not agents[name]['model'] in hf_models:
-        hf_models[agents[name]['model']] = setup_hf_model(agents[name]['model'].split('hf_')[-1], cache_dir=args.hf_home)
+for name, agent in agents.items(): 
+    if 'hf' in agent['model'] and not agent['model'] in hf_models:
+        hf_models[agent['model']] = setup_hf_model(agent['model'].split('hf_')[-1], cache_dir=args.hf_home)
         
-    inital_prompt_agent = InitialPrompt(args.game_dir, name, agents[name]['file_name'],\
+    inital_prompt_agent = InitialPrompt(args.game_dir, name, agent['file_name'],\
                                         role_to_agent_names['p1'], role_to_agent_names['p2'], \
-                                        num_issues=args.issues_num, num_agents= args.agents_num, incentive=agents[name]['incentive'])
+                                        num_issues=args.issues_num, num_agents= args.agents_num, incentive=agent['incentive'])
     
     round_prompt_agent = RoundPrompts(name, role_to_agent_names['p1'],initial_deal,\
-                                    incentive=agents[name]['incentive'], window_size=args.window_size,
+                                    incentive=agent['incentive'], window_size=args.window_size,
                                     target_agent=role_to_agent_names.get('target',''),\
                                     rounds_num=args.rounds_num, agents_num=args.agents_num)      
 
         
-    agent_instance = Agent(inital_prompt_agent,round_prompt_agent,name,args.temp,model=agents[name]['model'],azure=args.azure,hf_models=hf_models)
-    agents[name]['instance'] = agent_instance
+    agent_instance = Agent(inital_prompt_agent,round_prompt_agent,name,args.temp,model=agent['model'],azure=args.azure,hf_models=hf_models)
+    agent['instance'] = agent_instance
 
-
+# Initialize coordinator agent
+if args.moderator:
+    initial_prompt_coordinator = CoordinatorInitialPrompt(None, None, None,
+                                                        role_to_agent_names['p1'],
+                                                        role_to_agent_names['p2'],
+                                                        args.issues_num,
+                                                        args.agents_num,
+                                                        incentive="cooperative")
+    round_prompt_coordinator = CoordinatorRoundPrompts(None,
+                                                    role_to_agent_names['p1'],
+                                                    initial_deal,
+                                                    "cooperative",
+                                                    window_size=args.window_size,
+                                                    rounds_num=args.rounds_num,
+                                                    agents_num=args.agents_num)
+    coordinator_agent = Coordinator(initial_prompt_coordinator,
+                                    round_prompt_coordinator,
+                                    "Moderator",
+                                    args.temp,
+                                    "gpt-4o-mini")
 
 # If not restart, agent_round_assignment is empty, then randomize order 
 if not args.restart: 
@@ -110,8 +132,18 @@ for round_idx in range(start_round_idx,args.rounds_num):
         print('=====')
         print(f'{current_agent} response: {agent_response}')
     
-    #Continue with rounds 
-    current_agent = agent_round_assignment[round_idx]
+    #Continue with rounds
+    # Get next agent
+    if args.moderator:
+        slot_prompt, agent_response = coordinator_agent.execute_round(history['content'], round_idx)
+        # TODO: For now we don't save the moderator's response in the history.
+        # history = save_conversation(history, "Moderator", agent_response, slot_prompt, agent_round_assignment)
+        current_agent = coordinator_agent.get_next_speaker(agent_response)
+        print("*****")
+        print(f'Moderator: {agent_response}')
+    else:
+        current_agent = agent_round_assignment[round_idx]
+    # Query next agent
     slot_prompt, agent_response = agents[current_agent]['instance'].execute_round(history['content'], round_idx)
     history = save_conversation(history, current_agent,agent_response, slot_prompt)
     print('=====')

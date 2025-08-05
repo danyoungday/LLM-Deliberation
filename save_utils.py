@@ -9,7 +9,7 @@ def process_answer(full_answer):
     return public_answer, plan 
 
 
-def save_conversation(history, agent_name,full_answer, prompt,round_assign=[],initial=False):
+def save_conversation(history, agent_name,full_answer, prompt, round_assign=[],initial=False):
     if initial: 
         history['content']['slot_assignment'] = round_assign
         history['content']["rounds"] = []
@@ -28,7 +28,7 @@ def save_conversation(history, agent_name,full_answer, prompt,round_assign=[],in
         else:
             history['content']['plan'][agent_name] = [plan]
     
-    write_file(history['content'],history['file'])
+    write_file(history['content'], history['file'])
     return history      
     
 
@@ -56,7 +56,7 @@ def write_file(log_dict,output_file):
         json.dump(log_dict, outfile)
     return 
 
-def create_outfiles(args,OUTPUT_DIR):
+def create_outfiles(args, OUTPUT_DIR):
     '''
     create output dirs of experiment if it does not exit 
     if restart:
