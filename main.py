@@ -20,6 +20,7 @@ from save_utils import create_outfiles,save_conversation
 
 parser = argparse.ArgumentParser(description='big negotiation!!')
 
+parser.add_argument("--moderator", action="store_true", help="Use the moderator to select the next speaker.")
 
 parser.add_argument('--temp',type=float, default='0')
 
@@ -98,24 +99,25 @@ for name, agent in agents.items():
     agent['instance'] = agent_instance
 
 # Initialize coordinator agent
-initial_prompt_coordinator = CoordinatorInitialPrompt(None, None, None,
-                                                      role_to_agent_names['p1'],
-                                                      role_to_agent_names['p2'],
-                                                      args.issues_num,
-                                                      args.agents_num,
-                                                      incentive="cooperative")
-round_prompt_coordinator = CoordinatorRoundPrompts(None,
-                                                   role_to_agent_names['p1'],
-                                                   initial_deal,
-                                                   "cooperative",
-                                                   window_size=args.window_size,
-                                                   rounds_num=args.rounds_num,
-                                                   agents_num=args.agents_num)
-coordinator_agent = Coordinator(initial_prompt_coordinator,
-                                round_prompt_coordinator,
-                                "Moderator",
-                                args.temp,
-                                "gpt-4o-mini")
+if args.moderator:
+    initial_prompt_coordinator = CoordinatorInitialPrompt(None, None, None,
+                                                        role_to_agent_names['p1'],
+                                                        role_to_agent_names['p2'],
+                                                        args.issues_num,
+                                                        args.agents_num,
+                                                        incentive="cooperative")
+    round_prompt_coordinator = CoordinatorRoundPrompts(None,
+                                                    role_to_agent_names['p1'],
+                                                    initial_deal,
+                                                    "cooperative",
+                                                    window_size=args.window_size,
+                                                    rounds_num=args.rounds_num,
+                                                    agents_num=args.agents_num)
+    coordinator_agent = Coordinator(initial_prompt_coordinator,
+                                    round_prompt_coordinator,
+                                    "Moderator",
+                                    args.temp,
+                                    "gpt-4o-mini")
 
 # If not restart, agent_round_assignment is empty, then randomize order 
 if not args.restart: 
@@ -132,13 +134,15 @@ for round_idx in range(start_round_idx,args.rounds_num):
     
     #Continue with rounds
     # Get next agent
-    slot_prompt, agent_response = coordinator_agent.execute_round(history['content'], round_idx)
-    history = save_conversation(history, "Moderator", agent_response, slot_prompt, agent_round_assignment)
-    current_agent = coordinator_agent.get_next_speaker(agent_response)
-    print("*****")
-    print(f'Moderator: {agent_response}')
-
-    # current_agent = agent_round_assignment[round_idx]
+    if args.moderator:
+        slot_prompt, agent_response = coordinator_agent.execute_round(history['content'], round_idx)
+        # TODO: For now we don't save the moderator's response in the history.
+        # history = save_conversation(history, "Moderator", agent_response, slot_prompt, agent_round_assignment)
+        current_agent = coordinator_agent.get_next_speaker(agent_response)
+        print("*****")
+        print(f'Moderator: {agent_response}')
+    else:
+        current_agent = agent_round_assignment[round_idx]
     # Query next agent
     slot_prompt, agent_response = agents[current_agent]['instance'].execute_round(history['content'], round_idx)
     history = save_conversation(history, current_agent,agent_response, slot_prompt)
