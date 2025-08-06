@@ -5,17 +5,20 @@ from prompt_utils import build_first_slot, format_history
 
 
 class ModeratorRoundPrompts:
+    """
+    Takes in history and constructs the slot prompt for the moderator agent.
+    """
     def __init__(
         self,
-        agent_name,
-        p1_name,
-        initial_deal,
-        incentive=None,
+        agent_name: str,
+        p1_name: str,
+        initial_deal: str,
+        incentive: str = None,
         scratch_pad_function=None,
-        window_size=6,
-        target_agent="",
-        rounds_num=24,
-        agents_num=6,
+        window_size: int = 6,
+        target_agent: str = "",
+        rounds_num: int = 24,
+        agents_num: int = 6,
     ):
         self.agent_name = agent_name
         self.p1_name = p1_name
@@ -27,7 +30,11 @@ class ModeratorRoundPrompts:
         self.rounds_num = rounds_num
         self.agents_num = agents_num
 
-    def build_slot_prompt(self, history, round_idx, other_args={}):
+    def build_slot_prompt(self, history: dict, round_idx: int, other_args={}) -> str:
+        """
+        Constructs prompt based on history and round.
+        Combines history, scratchpad, unified instructions, then plan.
+        """
         first = round_idx == 0  # first round
         final_round = (
             self.rounds_num - round_idx
@@ -64,7 +71,10 @@ class ModeratorRoundPrompts:
 
         return slot_prompt
 
-    def get_history_input(self, history, final_round=False, final_vote=False):
+    def get_history_input(self, history: dict, final_round: bool = False, final_vote: bool = False) -> str:
+        """
+        Creates the history prompt using the history data.
+        """
         personalized_history, last_plan = format_history(
             self.agent_name, history, self.window_size
         )
@@ -81,7 +91,10 @@ class ModeratorRoundPrompts:
             slot_prompt += " This is an official and final voting session."
         return slot_prompt
 
-    def get_unified_instructions(self):
+    def get_unified_instructions(self) -> str:
+        """
+        General instructions for the agent.
+        """
         prompt = """ 
         Enclose the scratchpad between <SCRATCHPAD> and </SCRATCHPAD>. The scratchpad is secret and not seen by other parties.
         Your final answer is public and must never contain scores. Enclose your final answer after the scratchpad between <ANSWER> and </ANSWER>.
@@ -91,7 +104,10 @@ class ModeratorRoundPrompts:
         """
         return prompt
 
-    def get_plan_prompt(self, is_p1, final_round, final_vote):
+    def get_plan_prompt(self, is_p1, final_round: bool, final_vote) -> str:
+        """
+        Planning prompt.
+        """
         plan_prompt = ""
         if not final_round:
             plan_prompt = """ 
@@ -100,14 +116,17 @@ class ModeratorRoundPrompts:
             Enclose the notes between <PLAN> and </PLAN>. """
         return plan_prompt
 
-    def cooperative_scratch_pad(self):
+    def cooperative_scratch_pad(self) -> str:
+        """
+        Scratchpad prompt.
+        """
         scratch_pad = """ 
         Please use a scratchpad to show intermediate calculations and explain yourself and why you are choosing a certain party to speak next. 
         In your scratchpad, 
             1) think about what others may prefer,
             2) Based on others' preferences and history and your notes, propose one party to speak so that it balances all scores and accommodates others and is more likely to lead to an agreement. 
-        
-        You must follow these important negotiation guidelines in all your suggestions: 
+
+        You must follow these important negotiation guidelines in all your suggestions:
         Aim for a balanced agreement considering all parties' interests.
         Show flexibility and openness to accommodate others' preferences.
         Express your objectives clearly and actively listen to others.

@@ -13,11 +13,11 @@ class ModeratorInitialPrompt:
         game_description_dir,
         agent_game_name,
         agent_file_name,
-        p1,
-        p2,
-        num_issues=5,
-        num_agents=6,
-        incentive="cooperative",
+        p1: str,
+        p2: str,
+        num_issues: int = 5,
+        num_agents: int = 6,
+        incentive: str = "cooperative",
         incentive_function=None,
     ):
         """
@@ -41,13 +41,13 @@ class ModeratorInitialPrompt:
 
         self.initial_prompt = self.build_initial_prompt()
 
-    def return_initial_prompt(self):
+    def return_initial_prompt(self) -> str:
         """
         Main method to be called, returns the initial prompt to go into the agent.
         """
         return self.initial_prompt
 
-    def load_global_instructions(self, file):
+    def load_global_instructions(self, file: str) -> str:
         """
         Load global instructions from file and replace agent name placeholder.
         """
@@ -59,7 +59,7 @@ class ModeratorInitialPrompt:
         )
         return global_instructions
 
-    def get_voting_rules(self):
+    def get_voting_rules(self) -> str:
         """
         Voting rules component.
         """
@@ -71,7 +71,7 @@ class ModeratorInitialPrompt:
         voting_rules += f"- Finally, {self.p1} will consolidate all suggestions and pass a formal proposal for a test vote. "
         return voting_rules
 
-    def cooperative_incentive_rules(self):
+    def cooperative_incentive_rules(self) -> str:
         """
         Incentive rules component.
         """
@@ -82,7 +82,7 @@ class ModeratorInitialPrompt:
         incentive_rules += f"\n\t- The proposal will pass if at least {self.num_agents-1} parties agree (must include {self.p1} and the {self.p2}). Your score will be this final deal's score. "
         return incentive_rules
 
-    def build_initial_prompt(self):
+    def build_initial_prompt(self) -> str:
         """
         Constructs the initial prompt for the moderator.
         """
