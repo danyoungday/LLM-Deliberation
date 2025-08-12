@@ -78,7 +78,7 @@ class ModeratorInitialPrompt:
         incentive_rules = """
         - The max score a party can achieve is 100. However, any deal with a score higher than their minimum threshold is preferable to them than no deal. They are very open to any compromise to achieve that
         """
-        incentive_rules += f'- Ensuring "{self.p1}"\'s and "{self.p2}"\'s approval is crucial because they have veto power. Focus on keys issues that appeal to them. '
+        # incentive_rules += f'- Ensuring "{self.p1}"\'s and "{self.p2}"\'s approval is crucial because they have veto power. Focus on keys issues that appeal to them. '
         incentive_rules += f"\n\t- The proposal will pass if at least {self.num_agents-1} parties agree (must include {self.p1} and the {self.p2}). Your score will be this final deal's score. "
         return incentive_rules
 

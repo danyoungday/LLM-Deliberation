@@ -67,7 +67,7 @@ def write_file(log_dict, output_file):
     return
 
 
-def create_outfiles(args, OUTPUT_DIR):
+def create_outfiles(restart: bool, output_file: str, OUTPUT_DIR):
     """
     create output dirs of experiment if it does not exit
     if restart:
@@ -82,8 +82,8 @@ def create_outfiles(args, OUTPUT_DIR):
 
     if not os.path.isdir(OUTPUT_DIR):
         os.makedirs(OUTPUT_DIR)
-    if args.restart:
-        history["file"] = os.path.join(OUTPUT_DIR, args.output_file)
+    if restart:
+        history["file"] = os.path.join(OUTPUT_DIR, output_file)
 
         with open(history["file"], "r") as file:
             history["content"] = json.load(file)
@@ -93,7 +93,7 @@ def create_outfiles(args, OUTPUT_DIR):
     else:
         time_str = time.strftime("%H_%M_%S", time.localtime())
         output_file = os.path.join(
-            OUTPUT_DIR, args.output_file.split(".json")[0] + time_str + ".json"
+            OUTPUT_DIR, output_file.split(".json")[0] + time_str + ".json"
         )
 
         round_start = 0

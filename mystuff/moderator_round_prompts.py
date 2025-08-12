@@ -127,6 +127,7 @@ class ModeratorRoundPrompts:
             2) Based on others' preferences and history and your notes, propose one party to speak so that it balances all scores and accommodates others and is more likely to lead to an agreement. 
 
         You must follow these important negotiation guidelines in all your suggestions:
+        Make sure all parties speak and have a chance to express their preferences.
         Aim for a balanced agreement considering all parties' interests.
         Show flexibility and openness to accommodate others' preferences.
         Express your objectives clearly and actively listen to others.
