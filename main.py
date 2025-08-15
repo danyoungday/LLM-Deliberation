@@ -229,19 +229,25 @@ def run_experiment(
                 history["content"], round_idx
             )
             # TODO: For now we don't save the moderator's response in the history.
-            # history = save_conversation(history, "Moderator", agent_response, slot_prompt, agent_round_assignment)
+            history = save_conversation(
+                history,
+                "Moderator",
+                moderator_response,
+                moderator_slot_prompt,
+                agent_round_assignment
+            )
+            # Save moderator's response in its own history
+            # moderator_history = save_conversation(
+            #     moderator_history,
+            #     "Moderator",
+            #     moderator_response,
+            #     moderator_slot_prompt,
+            #     initial=(round_idx == 0)
+            # )
             current_agent = moderator_agent.get_next_speaker(moderator_response)
             if verbose:
                 print("*****")
                 print(f"Moderator: {moderator_response}")
-            # Save moderator's response in its own history
-            moderator_history = save_conversation(
-                moderator_history,
-                "Moderator",
-                moderator_response,
-                moderator_slot_prompt,
-                initial=(round_idx == 0)
-            )
         else:
             current_agent = agent_round_assignment[round_idx]
         # Query next agent
@@ -252,7 +258,6 @@ def run_experiment(
         if verbose:
             print("=====")
             print(f"{current_agent} response: {agent_response}")
-
 
     # Final deal by P1
     if verbose:
